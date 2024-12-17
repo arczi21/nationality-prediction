@@ -2,6 +2,29 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+class RNN(nn.Module):
+    def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0):
+        super(RNN, self).__init__()
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+
+        self.embeddings = nn.Embedding(input_size, embedding_dim)
+        self.rnn = nn.RNN(embedding_dim, self.hidden_dim, self.num_layers, batch_first=True)
+        self.dropout = nn.Dropout(p=final_dropout)
+        self.fc = nn.Linear(self.hidden_dim, output_size)
+
+    def forward(self, x, lengths=None):
+        out = self.embeddings(x)
+        out, _ = self.rnn(out)
+        if lengths is None:
+            out = out[:, -1, :]
+        else:
+            out = out.gather(1,
+                             lengths.unsqueeze(-1).unsqueeze(-1).expand(out.size(0), 1, self.hidden_dim) - 1).squeeze(1)
+        out = self.dropout(out)
+        out = self.fc(out)
+        return out
+
 
 class LSTM(nn.Module):
     def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0):
@@ -16,11 +39,12 @@ class LSTM(nn.Module):
 
     def forward(self, x, lengths=None):
         out = self.embeddings(x)
-        out, (h, c) = self.lstm(out)
+        out, _ = self.lstm(out)
         if lengths is None:
             out = out[:, -1, :]
         else:
-            out = out.gather(1, lengths.unsqueeze(-1).unsqueeze(-1).expand(out.size(0), 1, self.hidden_dim)-1).squeeze(1)
+            out = out.gather(1,
+                             lengths.unsqueeze(-1).unsqueeze(-1).expand(out.size(0), 1, self.hidden_dim) - 1).squeeze(1)
         out = self.dropout(out)
         out = self.fc(out)
         return out
