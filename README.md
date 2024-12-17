@@ -35,6 +35,18 @@ Output:
 
 ## Details
 
+### Setting up the Conda environment
+
+To set up the Conda environment, run the following command in your terminal:
+```commandline
+conda env create -f dependencies.yml
+```
+This will create a new environment with the required dependencies. Activate it using:
+
+```commandline
+conda activate nat_pred
+```
+
 ### Dataset and Training
 To download the dataset, simply run:
 ```bash
