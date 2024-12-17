@@ -12,7 +12,7 @@ from numbers import Number
 
 from utils import ModelTrainer
 from prepare_data import prepare_and_load_data
-from models import GRU
+from models import GRU, LSTM, RNN
 
 
 device = torch.device('cuda')
@@ -20,7 +20,7 @@ device = torch.device('cuda')
 
 class EphemeralModelTrainer(ModelTrainer):
     def __init__(self, Class: Any, params: Dict[str, Any], train_dataloader: DataLoader, valid_dataloader: DataLoader,
-                 log_every: int, filename='checkpoints/model.pth', log_wandb=False, epoch_save=False):
+                 log_every: int, filename='test_model', log_wandb=False, epoch_save=False):
 
         self.Class = Class
         self.lr = params['lr']
@@ -44,25 +44,26 @@ class EphemeralModelTrainer(ModelTrainer):
         if self.log_wandb:
             wandb.init(
                 project="nationality-prediction",
-                name='gru-model',
+                name=filename,
                 config=params)
 
     def load(self):
         self.model = self.Class(**self.network_params).to(device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-        if os.path.exists(self.filename):
-            checkpoint = torch.load(self.filename)
+        if os.path.exists(f"checkpoints/{self.filename}/model.pth"):
+            checkpoint = torch.load(f"checkpoints/{self.filename}/model.pth")
             self.model.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             return True
         return False
 
-    def save(self, clear_memory=True):
-        if os.path.dirname(self.filename) != '':
-            os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+    def save(self, path, clear_memory=True):
+        if os.path.dirname(path) != '':
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
+            'params': self.network_params,
         }, self.filename)
 
         if clear_memory:
@@ -99,7 +100,8 @@ class EphemeralModelTrainer(ModelTrainer):
                 sequences, lengths, labels = next(it)
             except StopIteration:
                 if self.epoch_save:
-                    self.save(clear_memory=False)
+                    self.save(path=f"checkpoints/{self.filename}/model.pth", clear_memory=False)
+                    self.save(path=f"checkpoints/{self.filename}/ckpt/model_step{self.iteration}.pth", clear_memory=False)
                 it = iter(self.train_dataloader)
                 sequences, lengths, labels = next(it)
 
@@ -132,7 +134,7 @@ class EphemeralModelTrainer(ModelTrainer):
         self.model.eval()
         test_loss, info = self.test(self.valid_dataloader)
 
-        self.save()
+        self.save(path=f"checkpoints/{self.filename}/model.pth")
 
         if self.log_wandb:
             wandb.log({"test_loss": test_loss, "accuracy": info['accuracy']}, step=self.iteration)
@@ -155,5 +157,5 @@ if __name__ == "__main__":
     }
     num_epochs = 15
 
-    trainer = EphemeralModelTrainer(GRU, params, train_dataloader, valid_dataloader, 3000, log_wandb=True)
+    trainer = EphemeralModelTrainer(LSTM, params, train_dataloader, valid_dataloader, 100, filename="gru_0", log_wandb=True)
     trainer.train(num_epochs)
