@@ -11,8 +11,6 @@ Key advantages of this project include:
 
 ## Usage
 
-The `natpred` library provides an easy way to predict the nationality of European names. Here’s how to use it:
-
 #### Single Name Prediction
 
 ```python
