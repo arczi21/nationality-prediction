@@ -12,7 +12,7 @@ from numbers import Number
 
 from utils import ModelTrainer
 from prepare_data import prepare_and_load_data
-from models import GRU, LSTM, RNN
+from models import GRU, LSTM, RNN, TransformerEncoderClassifier
 
 
 device = torch.device('cuda')
@@ -20,7 +20,7 @@ device = torch.device('cuda')
 
 class EphemeralModelTrainer(ModelTrainer):
     def __init__(self, Class: Any, params: Dict[str, Any], train_dataloader: DataLoader, valid_dataloader: DataLoader,
-                 log_every: int, filename='test_model', log_wandb=False, epoch_save=False):
+                 log_every: int, filename='test_model', wandb_name='test', log_wandb=False, epoch_save=False):
 
         self.Class = Class
         self.lr = params['lr']
@@ -44,7 +44,7 @@ class EphemeralModelTrainer(ModelTrainer):
         if self.log_wandb:
             wandb.init(
                 project="nationality-prediction",
-                name=filename,
+                name=wandb_name,
                 config=params)
 
     def load(self):
@@ -144,18 +144,24 @@ class EphemeralModelTrainer(ModelTrainer):
 
 
 if __name__ == "__main__":
-    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data('nationalities.csv')
+    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data('nationalities.csv', train_batch=250, test_batch=250)
 
     params = {
         'input_size': 99,
         'output_size': 24,
-        'embedding_dim': 64,
-        'hidden_dim': 384,
-        'num_layers': 3,
-        'final_dropout': 0.3,
-        'lr': 0.0001
+        'embedding_dim': 256,
+        'ff_dim': 512,
+        'num_heads': 8,
+        'num_layers': 4,
+        'final_dropout': 0,
+        'lr': 0.0003
     }
-    num_epochs = 15
+    num_epochs = 3
 
-    trainer = EphemeralModelTrainer(LSTM, params, train_dataloader, valid_dataloader, 100, filename="gru_0", log_wandb=True)
-    trainer.train(num_epochs)
+    for lr in [0.001, 0.0003, 0.0001, 0.00003, 0.00001]:
+        params['lr'] = lr
+
+        trainer = EphemeralModelTrainer(TransformerEncoderClassifier, params, train_dataloader, valid_dataloader,
+                                            log_every=500, filename=f"transformer_big_batch_lr{lr}", wandb_name='transformer_big_batch_lrsearch',
+                                            log_wandb=True, epoch_save=True)
+        trainer.train(num_epochs)

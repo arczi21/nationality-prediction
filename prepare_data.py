@@ -34,7 +34,7 @@ def collate_fn(batch):
     return padded_words, torch.tensor(lengths), torch.tensor(labels)
 
 
-def prepare_and_load_data(filename):
+def prepare_and_load_data(filename, train_batch=50, test_batch=50):
     data = pd.read_csv(filename)
     data = preprocessing(data)
 
@@ -64,9 +64,9 @@ def prepare_and_load_data(filename):
     train_set, valid_set, test_set = torch.utils.data.random_split(dataset, [train_len, valid_len, test_len],
                                                                         generator=generator)
 
-    train_dataloader = DataLoader(train_set, batch_size=50, shuffle=True, collate_fn=collate_fn)
-    valid_dataloader = DataLoader(valid_set, batch_size=50, shuffle=True, collate_fn=collate_fn)
-    test_dataloader = DataLoader(test_set, batch_size=50, shuffle=True, collate_fn=collate_fn)
+    train_dataloader = DataLoader(train_set, batch_size=train_batch, shuffle=True, collate_fn=collate_fn)
+    valid_dataloader = DataLoader(valid_set, batch_size=test_batch, shuffle=True, collate_fn=collate_fn)
+    test_dataloader = DataLoader(test_set, batch_size=test_batch, shuffle=True, collate_fn=collate_fn)
 
     return train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels
 

@@ -161,27 +161,34 @@ class RNNSearch(nn.Module):
         return out
 
 
+MAX_LEN = 300
+
+
 class TransformerEncoderClassifier(nn.Module):
-    def __init__(self, input_dim, embed_dim, num_heads, num_layers, num_classes, max_len):
-        super().__init__()
+    def __init__(self, input_size, output_size, embedding_dim, ff_dim, num_heads, num_layers, final_dropout=0):
+        super(TransformerEncoderClassifier, self).__init__()
 
-        self.embedding = nn.Embedding(input_dim, embed_dim)
-        self.positional_encoding = nn.Parameter(torch.zeros(1, max_len, embed_dim))
+        self.embedding = nn.Embedding(input_size, embedding_dim)
+        self.positional_encoding = nn.Parameter(torch.zeros(1, MAX_LEN, embedding_dim))
+
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=embed_dim,
+            d_model=embedding_dim,
             nhead=num_heads,
-            dim_feedforward=embed_dim * 2,
-            batch_first=True  # Ensures batch comes first in the input
+            dim_feedforward=ff_dim,
+            batch_first=True
         )
+
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers)
+        self.dropout = nn.Dropout(p=final_dropout)
+        self.fc = nn.Linear(embedding_dim, output_size)
 
-        self.fc = nn.Linear(embed_dim, num_classes)
-
-    def forward(self, x):
+    def forward(self, x, lengths):
         x = self.embedding(x) + self.positional_encoding[:, :x.size(1), :]
 
-        encoded = self.encoder(x)
+        max_len = x.size(1)
+        attention_mask = torch.arange(max_len, device=lengths.device).unsqueeze(0) >= lengths.unsqueeze(1)
 
+        encoded = self.encoder(x, src_key_padding_mask=attention_mask)
         pooled = torch.mean(encoded, dim=1)
         out = self.fc(pooled)
         return out
