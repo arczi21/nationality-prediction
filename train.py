@@ -64,7 +64,7 @@ class EphemeralModelTrainer(ModelTrainer):
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'params': self.network_params,
-        }, self.filename)
+        }, path)
 
         if clear_memory:
             self.model = None
@@ -144,24 +144,22 @@ class EphemeralModelTrainer(ModelTrainer):
 
 
 if __name__ == "__main__":
-    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data('nationalities.csv', train_batch=250, test_batch=250)
+    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data('nationalities.csv', train_batch=50, test_batch=50)
+
+    num_epochs = 5
 
     params = {
         'input_size': 99,
         'output_size': 24,
-        'embedding_dim': 256,
-        'ff_dim': 512,
-        'num_heads': 8,
-        'num_layers': 4,
-        'final_dropout': 0,
+        'embedding_dim': 128,
+        'hidden_dim': 512,
+        'num_layers': 3,
+        'final_dropout': 0.5,
         'lr': 0.0003
     }
-    num_epochs = 3
 
-    for lr in [0.001, 0.0003, 0.0001, 0.00003, 0.00001]:
-        params['lr'] = lr
+    trainer = EphemeralModelTrainer(GRU, params, train_dataloader, valid_dataloader, 1000,
+                                    filename=f"gru_best", wandb_name=f"gru_best",
+                                    log_wandb=True, epoch_save=True)
 
-        trainer = EphemeralModelTrainer(TransformerEncoderClassifier, params, train_dataloader, valid_dataloader,
-                                            log_every=500, filename=f"transformer_big_batch_lr{lr}", wandb_name='transformer_big_batch_lrsearch',
-                                            log_wandb=True, epoch_save=True)
-        trainer.train(num_epochs)
+    trainer.train(num_epochs)
