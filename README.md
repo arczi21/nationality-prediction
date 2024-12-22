@@ -11,8 +11,6 @@ Key advantages of this project include:
 
 ## Usage
 
-The `natpred` library provides an easy way to predict the nationality of European names. Here’s how to use it:
-
 #### Single Name Prediction
 
 ```python
@@ -110,19 +108,24 @@ Austria (AT), Belarus (BY), Belgium (BE), Bulgaria (BG), Czech Republic (CZ), De
 
 ### Model and hyperparameters
 
-To achieve accurate nationality predictions, multiple sequence-based machine learning models were evaluated. Below is a summary of the performance of two models: LSTM (Long Short-Term Memory) and GRU (Gated Recurrent Unit).
+This section outlines the models, hyperparameters, and optimization strategies used in the project for nationality prediction.
 
 #### Model Performance
 
-The following table presents the test accuracy for each model with different parameter configurations:
+Two sequence-based models were evaluated for the task: LSTM (Long Short-Term Memory) and GRU (Gated Recurrent Unit). The models' performances were assessed using key metrics: macro precision, recall, F1 score, and accuracy. The results are summarized below:
 
-| Parameters \ Model | LSTM    | GRU    |
-| :---:   | :---: | :---: |
-| 0.5M | 62.4%   | 63.5%   |
-| 1.5M | 64.8%   | 65.7%   |
-| 3M | 65.7%   | **65.8%**   |
+| Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
+| :---:   | :---: | :---: | :---: | :---: |
+| LSTM | 0.682 | 0.611 | 0.631 | 69.9% |
+| GRU | **0.696** | **0.629** | **0.649** | **71.5%** |
 
-From these results, the GRU model with 3 million parameters was found to be the most effective, achieving the highest accuracy. 
+The GRU model consistently outperformed the LSTM model across all metrics, making it the preferred choice for deployment.
+
+
+#### Confusion matrices
+The performance of the GRU model is further illustrated using row-normalized and column-normalized confusion matrices:
+
+![](confusion_matrix.pdf)
 
 #### Hyperparameter Optimization
 
