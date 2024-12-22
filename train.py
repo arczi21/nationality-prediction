@@ -144,22 +144,23 @@ class EphemeralModelTrainer(ModelTrainer):
 
 
 if __name__ == "__main__":
-    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data('nationalities.csv', train_batch=50, test_batch=50)
+    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data(
+        'nationalities.csv', train_batch=50, test_batch=50)
 
-    num_epochs = 5
+    num_epochs = 10
 
     params = {
-        'input_size': 99,
-        'output_size': 24,
+        'input_size': len(letter_encoder),
+        'output_size': len(nat_labels),
         'embedding_dim': 128,
         'hidden_dim': 512,
         'num_layers': 3,
         'final_dropout': 0.5,
-        'lr': 0.0003
+        'lr': 0.0001
     }
 
     trainer = EphemeralModelTrainer(GRU, params, train_dataloader, valid_dataloader, 1000,
-                                    filename=f"gru_best", wandb_name=f"gru_best",
+                                    filename=f"gru_full_ds", wandb_name=f"gru_full_ds",
                                     log_wandb=True, epoch_save=True)
 
     trainer.train(num_epochs)

@@ -46,6 +46,9 @@ class LetterEncoder:
     def __init__(self, alphabet_dictionary):
         self.alphabet_dictionary = alphabet_dictionary
 
+    def __len__(self):
+        return len(self.alphabet_dictionary) + 1
+
     def encode_letter(self, letter):
         if letter in self.alphabet_dictionary:
             return self.alphabet_dictionary[letter]

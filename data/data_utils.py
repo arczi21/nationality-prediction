@@ -1,63 +1,63 @@
+import tqdm
 import requests
 import pandas as pd
 
+def collect(name_p, code, list_len=5000):
 
-url = "https://en.wikipedia.org/w/api.php"
+    url = "https://en.wikipedia.org/w/api.php"
 
-def generate_names(category_title, name_list, visited_dict, max_length=float('inf'), max_per_category=float('inf')):
-
-    visited_dict[category_title] = True
-
-    params = {
+    category_params = {
         "action": "query",
-        "cmtitle": category_title,
-        "cmlimit": "500",
+        "cmtitle": None,
+        "cmlimit": "max",
         "list": "categorymembers",
-        "format": "json"
+        "format": "json",
+        "cmcontinue": None,
     }
 
-    category_counter = 0
+    #start_category = f'Category:21st-century_{name_p}_people'
+    start_category = f'Category:{name_p}_people'
 
-    while True:
-        req = requests.get(url=url, params=params)
-        json = req.json()
+    visited_dict = {}
+    categories = [(start_category, 0)]
+    people_list = []
 
+    print(f'{code}:')
 
-        for it in json['query']['categorymembers']:
+    with tqdm.tqdm(total=list_len) as progress:
 
-            if len(name_list) < max_length:
-                if it['ns'] == 0 and category_counter < max_per_category:
-                    if "List of" not in it['title'] and it['title'] not in visited_dict:
-                        name_list.append(it['title'])
-                        visited_dict[it['title']] = True
-                        category_counter += 1
-                elif it['ns'] == 14:
-                    if it['title'] not in visited_dict:
-                        generate_names(it['title'], name_list, visited_dict, max_length, max_per_category)
+      while len(people_list) < list_len:
+        if len(categories) > 0:
+            category_name, tier = categories.pop()
+            category_params["cmtitle"] = category_name
+            category_params["cmcontinue"] = None
+            visited_dict[category_name] = True
 
-        if "continue" in json:
-            params["cmcontinue"] = json["continue"]["cmcontinue"]
+            while True:
+
+                response = requests.get(url, category_params)
+                data = response.json()
+
+                for query in data['query']['categorymembers']:
+                    if query['title'] not in visited_dict and len(people_list) < list_len:
+                        visited_dict[query['title']] = True
+                        if query['ns'] == 0:
+                            people_list.append(query['title'])
+                            progress.update(1)
+                        elif query['ns'] == 14:
+                            if name_p in query['title']:
+                                categories.append((query['title'], tier+1))
+
+                if "continue" in data:
+                    category_params["cmcontinue"] = data["continue"]["cmcontinue"]
+                else:
+                    break
         else:
             break
+    return people_list
 
 
-def generate_names_list(category_title, visited_dict, size_per_search, max_per_category):
-    name_list_temp = []
-    generate_names(category_title, name_list_temp, visited_dict, size_per_search, max_per_category)
-    return name_list_temp
-
-
-def full_list(categories, size_per_search, max_per_category = 100):
-    name_list = []
-    visited_dict = {}
-
-    for category in categories:
-        name_list.extend(generate_names_list(category, visited_dict, size_per_search, max_per_category))
-
-    return name_list
-
-
-def download_country_data(data, categories, code, size_per_search, max_per_category):
-    name_list = full_list(categories, size_per_search, max_per_category)
+def download_country_data(data, name_p, code, size_per_search):
+    name_list = collect(name_p, code, size_per_search)
     return pd.concat([data, pd.DataFrame({'name': name_list, 'nationality': code})], ignore_index=True)
 
