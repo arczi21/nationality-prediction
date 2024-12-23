@@ -2,7 +2,7 @@
 
 While several tools for this task are available online, they often come with limitations that hinder their usability. For example, *nationalize.io* imposes restrictions on free access, *NamePrism* requires an approval process for API tokens, and *name2nat*, despite being open-source, is outdated and difficult to configure due to unclear dependencies.
 
-This project takes a **machine learning approach** to nationality prediction, aiming to address these challenges with a fresh perspective. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns and features from training data. This gives them possibility to outperform purely lookup-based methods, which rely heavily on the completeness of their databases.
+This project takes a **machine learning approach** to nationality prediction, aiming to address these challenges with a fresh perspective. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns and features from training data.
 
 Key advantages of this project include:
 * Offline functionality: The model operates locally without the need for an internet connection
@@ -125,7 +125,7 @@ The GRU model consistently outperformed the LSTM model across all metrics, makin
 #### Confusion matrices
 The performance of the GRU model is further illustrated using row-normalized and column-normalized confusion matrices:
 
-![](confusion_matrix.png)
+[Figure]
 
 #### Hyperparameter Optimization
 
@@ -137,6 +137,28 @@ The optimal model configuration includes:
 * GRU Layer: 3 layers, each with 512 units
 * Learning Rate: 0.0003
 * Dropout: 0.5 on the last hidden layer
+
+
+### Comparison with Existing Tools
+
+To evaluate the effectiveness of the proposed model, its performance was compared to nationalize.io, a widely used API for nationality prediction. Since the project currently focuses on European countries, only the European nationality with the highest probability was considered for predictions.
+
+The following table summarizes the performance of nationalize.io on the test set, using the same evaluation metrics: macro precision, recall, F1 score, and accuracy.
+
+| Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
+| :---:   | :---: | :---: | :---: | :---: |
+| GRU | 0.696 | 0.629 | 0.649 | 71.5% |
+| *nationalize.io* | 0.699 | 0.629 | 0.653 | 65.5% |
+
+
+#### Conclusions
+
+While the two approaches are comparable in performance, the GRU-based model provides unique advantages:
+
+* Offline Functionality: No internet connection required.
+* Free and Unrestricted: No subscription fees or API limitations.
+
+These benefits make the GRU-based model a competitive and practical alternative for developers and researchers.
 
 
 ## Next steps
