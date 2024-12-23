@@ -2,7 +2,7 @@
 
 While several tools for this task are available online, they often come with limitations that hinder their usability. For example, *nationalize.io* imposes restrictions on free access, *NamePrism* requires an approval process for API tokens, and *name2nat*, despite being open-source, is outdated and difficult to configure due to unclear dependencies.
 
-This project takes a **machine learning approach** to nationality prediction, aiming to address these challenges with a fresh perspective. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns and features from training data.
+This project takes a **machine learning approach** to nationality prediction, providing an alternative solution to address these challenges. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns and features from training data.
 
 Key advantages of this project include:
 * Offline functionality: The model operates locally without the need for an internet connection
