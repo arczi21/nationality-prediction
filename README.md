@@ -125,7 +125,7 @@ The GRU model consistently outperformed the LSTM model across all metrics, makin
 #### Confusion matrices
 The performance of the GRU model is further illustrated using row-normalized and column-normalized confusion matrices:
 
-[Figure]
+![](confusion_matrix.png)
 
 #### Hyperparameter Optimization
 

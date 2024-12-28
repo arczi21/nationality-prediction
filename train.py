@@ -10,12 +10,12 @@ from torch.utils.data import DataLoader
 from typing import Any, Dict
 from numbers import Number
 
-from utils import ModelTrainer
-from prepare_data import prepare_and_load_data
+from utils import LETTERS
+from utils import ModelTrainer, LetterEncoder, load_data, get_labels, prepare_data
 from models import GRU, LSTM, RNN, TransformerEncoderClassifier
 
 
-device = torch.device('cuda')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class EphemeralModelTrainer(ModelTrainer):
@@ -144,10 +144,17 @@ class EphemeralModelTrainer(ModelTrainer):
 
 
 if __name__ == "__main__":
-    train_dataloader, valid_dataloader, test_dataloader, letter_encoder, nat_labels = prepare_and_load_data(
-        'nationalities.csv', train_batch=50, test_batch=50)
 
-    num_epochs = 10
+    print(f'device: {device}')
+
+    train_df, test_df = load_data()
+
+    letter_encoder = LetterEncoder(LETTERS)
+    nat_labels = get_labels(train_df)
+
+    train_dataloader, valid_dataloader = prepare_data(train_df, nat_labels, letter_encoder, batch_size=50)
+
+    num_epochs = 5
 
     params = {
         'input_size': len(letter_encoder),
@@ -156,7 +163,7 @@ if __name__ == "__main__":
         'hidden_dim': 512,
         'num_layers': 3,
         'final_dropout': 0.5,
-        'lr': 0.0001
+        'lr': 0.0003
     }
 
     trainer = EphemeralModelTrainer(GRU, params, train_dataloader, valid_dataloader, 1000,
