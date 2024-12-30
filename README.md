@@ -116,10 +116,10 @@ Two sequence-based models were evaluated for the task: LSTM (Long Short-Term Mem
 
 | Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
 | :---:   | :---: | :---: | :---: | :---: |
-| LSTM | 0.682 | 0.611 | 0.631 | 69.9% |
-| GRU | **0.696** | **0.629** | **0.649** | **71.5%** |
+| LSTM | 0.727 | 0.688 | 0.685 | 68.8% |
+| GRU | 0.739 | 0.705 | 0.702 | 70.5% |
 
-The GRU model consistently outperformed the LSTM model across all metrics, making it the preferred choice for deployment.
+The GRU and LSTM models perform very similarly, with the GRU slightly outperforming the LSTM across all metrics.
 
 
 #### Confusion matrices
@@ -147,18 +147,18 @@ The following table summarizes the performance of nationalize.io on the test set
 
 | Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
 | :---:   | :---: | :---: | :---: | :---: |
-| GRU | 0.696 | 0.629 | 0.649 | 71.5% |
+| Best model (GRU) | 0.739 | 0.705 | 0.702 | 70.5% |
 | *nationalize.io* | 0.699 | 0.629 | 0.653 | 65.5% |
 
 
 #### Conclusions
 
-While the two approaches are comparable in performance, the GRU-based model provides unique advantages:
+The GRU-based model outperforms nationalize.io in several key performance metrics, demonstrating its effectiveness in nationality prediction. Moreover, the GRU-based model offers several practical advantages:
 
 * Offline Functionality: No internet connection required.
 * Free and Unrestricted: No subscription fees or API limitations.
 
-These benefits make the GRU-based model a competitive and practical alternative for developers and researchers.
+These factors make the GRU-based model a more competitive and viable option for developers and researchers seeking a high-performance, flexible, and cost-effective solution for nationality prediction.
 
 
 ## Next steps
