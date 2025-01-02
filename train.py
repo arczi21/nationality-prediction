@@ -4,32 +4,27 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import pickle
 
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 from torch.utils.data import DataLoader
 from typing import Any, Dict
-from numbers import Number
 
-from utils import LETTERS
-from utils import ModelTrainer, LetterEncoder, load_data, get_labels, prepare_data
+from utils import ModelTrainer, load_data, get_labels, prepare_data
 from models import GRU, LSTM, RNN, TransformerEncoderClassifier
+from tokenizers import Tokenizer, CharacterTokenizer
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-class EphemeralModelTrainer(ModelTrainer):
+class LoadSaveTrainer(ModelTrainer):
     def __init__(self, Class: Any, params: Dict[str, Any], train_dataloader: DataLoader, valid_dataloader: DataLoader,
-                 log_every: int, filename='test_model', wandb_name='test', log_wandb=False, epoch_save=False):
+                 tokenizer: Tokenizer, device: torch.device, filename='test_model', wandb_name='test', log_wandb=False, epoch_save=False):
 
         self.Class = Class
-        self.lr = params['lr']
-        self.network_params = params.copy()
-        del self.network_params['lr']
-
+        self.params = params
         self.train_dataloader = train_dataloader
         self.valid_dataloader = valid_dataloader
-        self.log_every = log_every
+        self.tokenizer = tokenizer
+        self.device = device
+
         self.filename = filename
         self.log_wandb = log_wandb
         self.epoch_save = epoch_save
@@ -48,8 +43,8 @@ class EphemeralModelTrainer(ModelTrainer):
                 config=params)
 
     def load(self):
-        self.model = self.Class(**self.network_params).to(device)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
+        self.model = self.Class(**self.params).to(self.device)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.params['lr'])
         if os.path.exists(f"checkpoints/{self.filename}/model.pth"):
             checkpoint = torch.load(f"checkpoints/{self.filename}/model.pth")
             self.model.load_state_dict(checkpoint['model_state_dict'])
@@ -63,7 +58,7 @@ class EphemeralModelTrainer(ModelTrainer):
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'params': self.network_params,
+            'params': self.params,
         }, path)
 
         if clear_memory:
@@ -71,22 +66,31 @@ class EphemeralModelTrainer(ModelTrainer):
             self.optimizer = None
 
     def test(self, dataloader: DataLoader):
+
+        y_true = []
+        y_pred = []
         losses = []
-        accuracies = []
-        for sequences, lengths, labels in dataloader:
-            sequences = sequences.to(device)
-            lengths = lengths.to(device)
-            labels = labels.to(device)
+        criterion = nn.CrossEntropyLoss(reduction='none')
+
+        for sequences, labels in dataloader:
+            sequences = self.tokenizer.batch_encode(sequences).to(self.device)
+            labels = labels.to(self.device)
 
             with torch.no_grad():
-                out = self.model(sequences, lengths)
-                test_loss = self.criterion(out, labels)
+                out = self.model(sequences)
                 argmax = out.argmax(dim=1)
 
-            losses.append(test_loss.item())
-            accuracies.extend((argmax == labels).float().cpu().numpy())
+            losses.extend(criterion(out, labels).tolist())
+            y_true.extend(list(labels.cpu().numpy()))
+            y_pred.extend(list(argmax.cpu().numpy()))
 
-        return np.mean(losses), {'accuracy': np.mean(accuracies)}
+        return {
+            'loss': np.mean(losses),
+            'accuracy': accuracy_score(y_true, y_pred),
+            'precision': precision_score(y_true, y_pred, average='macro', zero_division=0),
+            'recall': recall_score(y_true, y_pred, average='macro', zero_division=0),
+            'f1': f1_score(y_true, y_pred, average='macro', zero_division=0),
+        }
 
     def train(self, training_length: float):
 
@@ -97,21 +101,28 @@ class EphemeralModelTrainer(ModelTrainer):
         while self.current_training_length < training_length:
 
             try:
-                sequences, lengths, labels = next(it)
+                sequences, labels = next(it)
             except StopIteration:
+
+                # test model and log
+                self.model.eval()
+                info = self.test(self.valid_dataloader)
+                print(f'{self.current_training_length:.2f}/{training_length:.2f} : ' + ", ".join(
+                    f'test_{key}: {value}' for key, value in info.items()))
+                if self.log_wandb:
+                    wandb.log({f'test_{key}': value for key, value in info.items()}, step=self.iteration)
+
                 if self.epoch_save:
                     self.save(path=f"checkpoints/{self.filename}/model.pth", clear_memory=False)
                     self.save(path=f"checkpoints/{self.filename}/ckpt/model_step{self.iteration}.pth", clear_memory=False)
                 it = iter(self.train_dataloader)
-                sequences, lengths, labels = next(it)
+                sequences, labels = next(it)
 
-            sequences = sequences.to(device)
-            lengths = lengths.to(device)
-            labels = labels.to(device)
+            sequences = self.tokenizer.batch_encode(sequences).to(self.device)
+            labels = labels.to(self.device)
 
             self.model.train()
-
-            outputs = self.model(sequences, lengths)
+            outputs = self.model(sequences)
             loss = self.criterion(outputs, labels)
             self.optimizer.zero_grad()
             loss.backward()
@@ -123,51 +134,44 @@ class EphemeralModelTrainer(ModelTrainer):
             self.current_training_length += sequences.size(0) / len(self.train_dataloader.dataset)
             self.iteration += 1
 
-            if self.iteration % self.log_every == 0:
-                self.model.eval()
-                test_loss, info = self.test(self.valid_dataloader)
-                print(f'{self.current_training_length:.2f}/{training_length:.2f} : test loss: {test_loss}, accuracy: {info["accuracy"]}')
-                if self.log_wandb:
-                    wandb.log({"test_loss": test_loss, "accuracy": info['accuracy']}, step=self.iteration)
-
 
         self.model.eval()
-        test_loss, info = self.test(self.valid_dataloader)
+        info = self.test(self.valid_dataloader)
 
         self.save(path=f"checkpoints/{self.filename}/model.pth")
 
         if self.log_wandb:
-            wandb.log({"test_loss": test_loss, "accuracy": info['accuracy']}, step=self.iteration)
+            wandb.log({f'test_{key}': value for key, value in info.items()}, step=self.iteration)
             wandb.finish()
 
-        return test_loss
+        return info['f1']
 
 
 if __name__ == "__main__":
 
+    train_df, test_df = load_data()
+    nat_labels = get_labels(train_df)
+    train_dataloader, valid_dataloader = prepare_data(train_df, nat_labels, batch_size=50, valid_size=20000)
+    tokenizer = CharacterTokenizer()
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'device: {device}')
 
-    train_df, test_df = load_data()
-
-    letter_encoder = LetterEncoder(LETTERS)
-    nat_labels = get_labels(train_df)
-
-    train_dataloader, valid_dataloader = prepare_data(train_df, nat_labels, letter_encoder, batch_size=50)
-
-    num_epochs = 5
-
     params = {
-        'input_size': len(letter_encoder),
+        'input_size': len(tokenizer),
         'output_size': len(nat_labels),
         'embedding_dim': 128,
-        'hidden_dim': 512,
-        'num_layers': 3,
+        'hidden_dim': 256,
+        'num_layers': 2,
         'final_dropout': 0.5,
-        'lr': 0.0003
+        'lr': 0.002
     }
 
-    trainer = EphemeralModelTrainer(GRU, params, train_dataloader, valid_dataloader, 1000,
-                                    filename=f"gru_full_ds", wandb_name=f"gru_full_ds",
-                                    log_wandb=True, epoch_save=True)
+    num_epochs = 5
+    name = 'lstm_test'
+
+    trainer = LoadSaveTrainer(Class=LSTM, params=params, train_dataloader=train_dataloader,
+                              valid_dataloader=valid_dataloader, tokenizer=tokenizer, device=device,
+                              log_every=float('inf'), filename=name, wandb_name=name, log_wandb=True)
 
     trainer.train(num_epochs)

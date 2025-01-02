@@ -27,7 +27,7 @@ class RNN(nn.Module):
 
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0):
+    def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0, **kwargs):
         super(LSTM, self).__init__()
         self.num_layers = num_layers
         self.hidden_dim = hidden_dim
@@ -37,14 +37,10 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout(p=final_dropout)
         self.fc = nn.Linear(self.hidden_dim, output_size)
 
-    def forward(self, x, lengths=None):
+    def forward(self, x):
         out = self.embeddings(x)
         out, _ = self.lstm(out)
-        if lengths is None:
-            out = out[:, -1, :]
-        else:
-            out = out.gather(1,
-                             lengths.unsqueeze(-1).unsqueeze(-1).expand(out.size(0), 1, self.hidden_dim) - 1).squeeze(1)
+        out = out[:, -1, :]
         out = self.dropout(out)
         out = self.fc(out)
         return out
@@ -71,39 +67,6 @@ class GRU(nn.Module):
         out = self.dropout(out)
         out = self.fc(out)
         return out
-
-
-class A(nn.Module):
-    def __init__(self, hidden_size, n_categories):
-        super(A, self).__init__()
-        self.fc = nn.Linear(hidden_size, n_categories)
-        self.categories = nn.Parameter(torch.empty(n_categories, hidden_size))
-        nn.init.normal_(self.categories, mean=0.0, std=0.02)
-
-    def forward(self, x):
-        p = self.fc(x)
-        p = nn.functional.softmax(p, dim=-1)
-        v = torch.matmul(p, self.categories)
-
-        return v
-
-
-class B(nn.Module):
-    def __init__(self, hidden_size, n_categories):
-        super(B, self).__init__()
-        self.fc = nn.Linear(hidden_size, n_categories)
-        self.categories = nn.Parameter(torch.empty(n_categories, hidden_size))
-        nn.init.normal_(self.categories, mean=0.0, std=0.02)
-        self.fc2 = nn.Linear(2*hidden_size, hidden_size)
-
-    def forward(self, x):
-        p = self.fc(x)
-        p = nn.functional.softmax(p, dim=-1)
-        v = torch.matmul(p, self.categories)
-        v = torch.cat((x, v), dim=-1)
-        v = self.fc2(v)
-
-        return v
 
 
 class GRUCAT(nn.Module):
