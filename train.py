@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from utils import ModelTrainer, load_data, get_labels, prepare_data
 from models import GRU, LSTM, RNN, TransformerEncoderClassifier
-from tokenizers import Tokenizer, CharacterTokenizer
+from tokenizer import Tokenizer, CharacterTokenizer
 
 
 class LoadSaveTrainer(ModelTrainer):
@@ -44,7 +44,7 @@ class LoadSaveTrainer(ModelTrainer):
 
     def load(self):
         self.model = self.Class(**self.params).to(self.device)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.params['lr'])
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.params['lr'], weight_decay=self.params['weight_decay'])
         if os.path.exists(f"checkpoints/{self.filename}/model.pth"):
             checkpoint = torch.load(f"checkpoints/{self.filename}/model.pth")
             self.model.load_state_dict(checkpoint['model_state_dict'])
@@ -165,17 +165,23 @@ if __name__ == "__main__":
         'input_size': len(tokenizer),
         'output_size': len(nat_labels),
         'embedding_dim': 128,
-        'hidden_dim': 256,
+        'hidden_dim': 512,
         'num_layers': 2,
         'final_dropout': 0.5,
-        'lr': 0.002
+        'lr': 0.002,
+        'weight_decay': 0.0003,
     }
 
-    num_epochs = 5
-    name = 'lstm_test'
+    wd = [0.0003, 0.0002, 0.0001, 0.00008, 0.00005]
 
-    trainer = LoadSaveTrainer(Class=LSTM, params=params, train_dataloader=train_dataloader,
-                              valid_dataloader=valid_dataloader, tokenizer=tokenizer, device=device,
-                              filename=name, wandb_name=name, log_wandb=True)
+    for i, weight_decay in enumerate(wd):
+        params['weight_decay'] = weight_decay
 
-    trainer.train(num_epochs)
+        num_epochs = 10
+        name = f'gruwd_{i}'
+
+        trainer = LoadSaveTrainer(Class=GRU, params=params, train_dataloader=train_dataloader,
+                                  valid_dataloader=valid_dataloader, tokenizer=tokenizer, device=device,
+                                  filename=name, wandb_name=name)
+
+        trainer.train(num_epochs)

@@ -44,7 +44,7 @@ class CharacterTokenizer(Tokenizer):
         return self.special_tokens
 
     def encode(self, input_data: str) -> torch.Tensor:
-        encoded = [self.special_tokens['<EOS>']] + [_id + len(self.special_tokens) for _id in list(input_data.encode('utf-8'))] + [self.special_tokens['<EOS>']]
+        encoded = [_id + len(self.special_tokens) for _id in list(input_data.encode('utf-8'))]
         return torch.tensor(encoded)
 
     def batch_encode(self, input_data: List[str], padding: str = 'longest') -> torch.Tensor:

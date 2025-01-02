@@ -50,7 +50,7 @@ class LSTM(nn.Module):
 
 
 class GRU(nn.Module):
-    def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0):
+    def __init__(self, input_size, output_size, embedding_dim, hidden_dim, num_layers, final_dropout=0, **kwargs):
         super(GRU, self).__init__()
         self.num_layers = num_layers
         self.hidden_dim = hidden_dim
@@ -60,8 +60,8 @@ class GRU(nn.Module):
         self.dropout = nn.Dropout(p=final_dropout)
         self.fc = nn.Linear(self.hidden_dim, output_size)
 
-    def forward(self, x, lengths=None):
-        out = self.embeddings(x)
+    def forward(self, input_ids, lengths=None, **kwargs):
+        out = self.embeddings(input_ids)
         out, _ = self.gru(out)
         if lengths is None:
             out = out[:, -1, :]
