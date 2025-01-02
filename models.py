@@ -37,10 +37,13 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout(p=final_dropout)
         self.fc = nn.Linear(self.hidden_dim, output_size)
 
-    def forward(self, x):
-        out = self.embeddings(x)
+    def forward(self, input_ids, lengths=None, **kwargs):
+        out = self.embeddings(input_ids)
         out, _ = self.lstm(out)
-        out = out[:, -1, :]
+        if lengths is None:
+            out = out[:, -1, :]
+        else:
+            out = out.gather(1, lengths.unsqueeze(-1).unsqueeze(-1).expand(out.size(0), 1, self.hidden_dim)-1).squeeze(1)
         out = self.dropout(out)
         out = self.fc(out)
         return out

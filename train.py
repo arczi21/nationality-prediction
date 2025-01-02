@@ -73,11 +73,13 @@ class LoadSaveTrainer(ModelTrainer):
         criterion = nn.CrossEntropyLoss(reduction='none')
 
         for sequences, labels in dataloader:
-            sequences = self.tokenizer.batch_encode(sequences).to(self.device)
+            inp = self.tokenizer.batch_encode_plus(sequences)
+            for k, v in inp.items():
+                inp[k] = v.to(self.device)
             labels = labels.to(self.device)
 
             with torch.no_grad():
-                out = self.model(sequences)
+                out = self.model(**inp)
                 argmax = out.argmax(dim=1)
 
             losses.extend(criterion(out, labels).tolist())
@@ -118,11 +120,13 @@ class LoadSaveTrainer(ModelTrainer):
                 it = iter(self.train_dataloader)
                 sequences, labels = next(it)
 
-            sequences = self.tokenizer.batch_encode(sequences).to(self.device)
+            inp = self.tokenizer.batch_encode_plus(sequences)
+            for k, v in inp.items():
+                inp[k] = v.to(self.device)
             labels = labels.to(self.device)
 
             self.model.train()
-            outputs = self.model(sequences)
+            outputs = self.model(**inp)
             loss = self.criterion(outputs, labels)
             self.optimizer.zero_grad()
             loss.backward()
@@ -131,7 +135,7 @@ class LoadSaveTrainer(ModelTrainer):
             if self.log_wandb:
                 wandb.log({"train_loss": loss.item()}, step=self.iteration)
 
-            self.current_training_length += sequences.size(0) / len(self.train_dataloader.dataset)
+            self.current_training_length += len(sequences) / len(self.train_dataloader.dataset)
             self.iteration += 1
 
 
@@ -172,6 +176,6 @@ if __name__ == "__main__":
 
     trainer = LoadSaveTrainer(Class=LSTM, params=params, train_dataloader=train_dataloader,
                               valid_dataloader=valid_dataloader, tokenizer=tokenizer, device=device,
-                              log_every=float('inf'), filename=name, wandb_name=name, log_wandb=True)
+                              filename=name, wandb_name=name, log_wandb=True)
 
     trainer.train(num_epochs)
