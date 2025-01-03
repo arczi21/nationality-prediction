@@ -7,40 +7,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 
-
-
-class Model(ABC):
-    @abstractmethod
-    def save(self, path: str) -> None:
-        pass
-    @abstractmethod
-    def load(self, path: str) -> bool:
-        pass
-    @abstractmethod
-    def train(self, training_length: float) -> Tuple[float, Dict[str, float]]:
-        pass
-
-class ModelGenerator(ABC):
-    @abstractmethod
-    def get_model(self, params: Dict[str, Any]) -> Model:
-        pass
-
-class ModelTrainer(ABC):
-    @abstractmethod
-    def train(self, training_length: float) -> Tuple[float, Dict[str, float]]:
-        pass
-
-class TrainerGenerator(ABC):
-    @abstractmethod
-    def get_trainer(self, params: Dict[str, Any], filename: str) -> ModelTrainer:
-        pass
-
-class ParameterSampler(ABC):
-    @abstractmethod
-    def sample_parameters(self) -> Dict[str, Any]:
-        pass
-
-
 class NamesDataset(Dataset):
     def __init__(self, names, labels, nat_labels):
         self.names = names

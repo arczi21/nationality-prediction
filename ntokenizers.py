@@ -2,6 +2,7 @@ import torch
 from torch.nn.utils.rnn import pad_sequence
 from abc import ABC, abstractmethod
 from typing import Dict, List
+from transformers import AutoTokenizer
 
 
 class Tokenizer(ABC):
@@ -9,17 +10,6 @@ class Tokenizer(ABC):
     Abstract base class for tokenizers
 
     """
-    @abstractmethod
-    def __len__(self):
-        pass
-
-    @abstractmethod
-    def encode(self, input_data: str) -> torch.Tensor:
-        pass
-
-    @abstractmethod
-    def batch_encode(self, input_data: List[str], padding: str = 'longest') -> torch.Tensor:
-        pass
 
     @abstractmethod
     def batch_encode_plus(self, input_data: List[str], padding: str = 'longest') -> Dict:
@@ -57,3 +47,14 @@ class CharacterTokenizer(Tokenizer):
         lengths = torch.tensor([len(seq) for seq in sequences])
         encoded = pad_sequence(sequences, batch_first=True, padding_value=self.special_tokens['<NULL>'])
         return {'input_ids': encoded, 'lengths': lengths}
+
+
+class TransformerTokenizer(Tokenizer):
+    def __init__(self, model_name: str):
+        self.tok = AutoTokenizer.from_pretrained(model_name)
+
+    def __len__(self):
+        return len(self.tok)
+
+    def batch_encode_plus(self, input_data: List[str], padding: str = 'longest'):
+        return self.tok.batch_encode_plus(input_data, padding=padding, return_tensors='pt')

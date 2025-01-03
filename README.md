@@ -114,10 +114,14 @@ This section outlines the models, hyperparameters, and optimization strategies u
 
 Two sequence-based models were evaluated for the task: LSTM (Long Short-Term Memory) and GRU (Gated Recurrent Unit). The models' performances were assessed using key metrics: macro precision, recall, F1 score, and accuracy. The results are summarized below:
 
-| Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
-| :---:   | :---: | :---: | :---: | :---: |
-| LSTM | 0.727 | 0.688 | 0.685 | 68.8% |
-| GRU | 0.739 | 0.705 | 0.702 | 70.5% |
+| Model \ Metric | Precision | Recall    | F1 score | Accuracy |
+|:--------------:|:---------:| :---: | :---: | :---: |
+|      LSTM      |   0.727   | 0.688 | 0.685 | 68.8% |
+|      GRU       |   0.739   | 0.705 | 0.702 | 70.5% |
+|   BERT-base    |   0.738   | 0.714 | 0.715 | 71.5% |
+|     mBERT      |   0.725   | 0.694 | 0.687 | 69.4% |
+
+
 
 The GRU and LSTM models perform very similarly, with the GRU slightly outperforming the LSTM across all metrics.
 
