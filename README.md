@@ -52,6 +52,8 @@ efficiently, without dividing sequence.
 
 ![](images/byte_encoding.png)
 
+The following RNN architectures were explored:
+
 - **LSTM**: Designed to address the vanishing gradient problem in standard RNNs.
 - **GRU**: GRUs are a simplified alternative to LSTMs with fewer parameters, making them computationally efficient.
 
