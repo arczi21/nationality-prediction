@@ -39,13 +39,26 @@ Austria (AT), Belarus (BY), Belgium (BE), Bulgaria (BG), Czech Republic (CZ), De
 This project explores two main architectural approaches: Recurrent Neural Networks (RNNs) and Transformers.
 
 #### RNNs
-RNNs process names as sequential data, making them effective for learning character-level dependencies. For this task, text inputs were converted into byte-level embeddings to capture fine-grained information. Two RNN variants were tested:
+
+For Recurrent Neural Networks (RNNs), names were represented as byte sequences using UTF-8
+encoding, converting each name into a series of numbers ranging from 0 to 255. Byte-level
+embeddings are particularly effective for name inputs because they support text in
+any language without relying on a predefined vocabulary. This makes them well-suited for
+handling multilingual tasks and names from diverse linguistic origins. Unlike word or subword
+tokenization, byte-level representations eliminate the risk of out-of-vocabulary tokens,
+ensuring that all input text is fully represented. This approach can capture subtle patterns
+in spelling. Additionally, since names are typically short, their entire byte sequence can be processed
+efficiently, without dividing sequence.
+
+![](images/byte_encoding.png)
 
 - **LSTM**: Designed to address the vanishing gradient problem in standard RNNs.
 - **GRU**: GRUs are a simplified alternative to LSTMs with fewer parameters, making them computationally efficient.
 
 #### Transformers
-Pretrained models, such as BERT, significantly outperformed randomly initialized models.
+Pretrained models, such as BERT, demonstrated significantly better performance than randomly
+initialized models. For these models, the respective standard tokenizers were used to process
+input data.
 
 - **BERT**: Fine-tuning BERT yielded the best overall performance. Despite being pretrained on general text data and using subword tokenization, BERT effectively adapted to name classification, surpassing all other models.
 - **mBERT**: Although mBERT is pretrained on multilingual data, it underperformed compared to BERT. This could be attributed to the broader scope of mBERT's training data, diluting its effectiveness for this specific task.
