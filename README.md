@@ -47,8 +47,8 @@ any language without relying on a predefined vocabulary. This makes them well-su
 handling multilingual tasks and names from diverse linguistic origins. Unlike word or subword
 tokenization, byte-level representations eliminate the risk of out-of-vocabulary tokens,
 ensuring that all input text is fully represented. This approach can capture subtle patterns
-in spelling. Additionally, since names are typically short, their entire byte sequence can be processed
-efficiently, without dividing sequence.
+in spelling. Additionally, since names are typically short, their entire byte sequence can
+be processed efficiently, without dividing sequence.
 
 ![](images/byte_encoding.png)
 
@@ -64,6 +64,19 @@ input data.
 
 - **BERT**: Fine-tuning BERT yielded the best overall performance. Despite being pretrained on general text data and using subword tokenization, BERT effectively adapted to name classification, surpassing all other models.
 - **mBERT**: Although mBERT is pretrained on multilingual data, it underperformed compared to BERT. This could be attributed to the broader scope of mBERT's training data, diluting its effectiveness for this specific task.
+- **ByT5**: Unlike other pre-trained transformer models, ByT5 operates directly on byte-level
+representations of names (similar to the approach used for RNNs), bypassing the need for
+tokenization. This token-free approach enables ByT5 to handle multilingual data and rare
+or complex name patterns effectively. Its ability to process raw UTF-8 byte sequences makes
+it ideal for processing names, as it captures fine-grained linguistic nuances
+without being constrained by predefined vocabularies. Although the input sequences
+are longer compared to tokenized models, this is not a significant drawback, as names
+are typically short. ByT5 demonstrated the best overall performance. Unlike the other
+models, ByT5 is a text-to-text model, directly predicting the country as text rather
+than outputting a probability distribution over all possible options. While this approach
+simplifies the prediction output, it lacks the detailed probabilistic information that
+can be useful for understanding model confidence or handling ambiguous cases.
+
 
 ### Hyperparameters
 
@@ -78,9 +91,10 @@ The models' performances were evaluated using **precision**, **recall**, **F1 sc
 | Model \ Metric | Precision |  Recall   | F1 score  | Accuracy  |
 |:--------------:|:---------:|:---------:|:---------:|:---------:|
 |      LSTM      |   0.727   |   0.688   |   0.685   |   68.8%   |
-|      GRU       | **0.739** |   0.705   |   0.702   |   70.5%   |
-|   BERT-base    | **0.738** | **0.714** | **0.715** | **71.5%** |
+|      GRU       |   0.739   |   0.705   |   0.702   |   70.5%   |
+|   BERT-base    |   0.738   |   0.714   |   0.715   |   71.5%   |
 |     mBERT      |   0.725   |   0.694   |   0.687   |   69.4%   |
+|     ByT5       | **0.770** | **0.733** | **0.731** | **73.3%** |  
 
 #### **Key observations**
 
@@ -101,10 +115,11 @@ To evaluate the effectiveness of the proposed model, its performance was compare
 
 The following table summarizes the performance of nationalize.io on the test set, using the same evaluation metrics: macro precision, recall, F1 score, and accuracy.
 
-| Model \ Metric | Precision    | Recall    | F1 score | Accuracy |
-| :---:   | :---: | :---: | :---: | :---: |
-| GRU | 0.739 | 0.705 | 0.702 | 70.5% |
-| *nationalize.io* | 0.699 | 0.629 | 0.653 | 65.5% |
+|  Model \ Metric  | Precision | Recall | F1 score | Accuracy |
+|:----------------:|:---------:|:------:|:--------:|:--------:|
+|       GRU        |   0.739   | 0.705  |  0.702   |  70.5%   |
+|       ByT5       |   0.770   | 0.733  |  0.731   |  73.3%   | 
+| *nationalize.io* |   0.699   | 0.629  |  0.653   |  65.5%   |
 
 
 #### Conclusions
