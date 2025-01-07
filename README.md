@@ -98,10 +98,11 @@ The models' performances were evaluated using **precision**, **recall**, **F1 sc
 
 #### **Key observations**
 
-- BERT achieves best overall performance with **0.715** F1 score and **71.5%** accuracy.
-- GRU shows competitive performance despite simpler architecture and lack of pre-training.
-- GRU slightly outperformed LSTM in both precision and recall, validating its effectiveness as a lightweight alternative for sequence-based tasks.
-
+- ByT5 demonstrated the best overall performance across all metrics.
+- Despite their simpler architectures and lack of pretraining, RNN-based models like GRU showed competitive performance.
+- RNNs were faster to train and easier to tune with limited computational resources, thanks to their lightweight architecture. This makes them attractive for scenarios where computational efficiency is a priority.
+- BERT adapted remarkably well to the name classification task, despite being pretrained on
+general text, which highlights its versatility.
 
 #### Confusion matrices
 
