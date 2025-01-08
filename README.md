@@ -2,7 +2,7 @@
 
 While several tools for this task are available online, they often come with limitations that hinder their usability. For example, *nationalize.io* imposes restrictions on free access, *NamePrism* requires an approval process for API tokens, and *name2nat*, despite being open-source, is outdated and difficult to configure due to unclear dependencies.
 
-This project takes a **machine learning approach** to nationality prediction, providing an alternative solution to address these challenges. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns and features from training data.
+This project takes a **machine learning approach** to nationality prediction. Unlike database search-based solutions, machine learning models excel at generalization. They are capable of making predictions even for unseen names by learning patterns.
 
 ## Table of Contents
 
@@ -62,7 +62,7 @@ Pretrained models, such as BERT, demonstrated significantly better performance t
 initialized models. For these models, the respective standard tokenizers were used to process
 input data.
 
-- **BERT**: Fine-tuning BERT yielded the best overall performance. Despite being pretrained on general text data and using subword tokenization, BERT effectively adapted to name classification, surpassing all other models.
+- **BERT**: Despite being pretrained on general text data and using subword tokenization, BERT effectively adapted to name classification, surpassing all other models.
 - **mBERT**: Although mBERT is pretrained on multilingual data, it underperformed compared to BERT. This could be attributed to the broader scope of mBERT's training data, diluting its effectiveness for this specific task.
 - **ByT5**: Unlike other pre-trained transformer models, ByT5 operates directly on byte-level
 representations of names (similar to the approach used for RNNs), bypassing the need for
