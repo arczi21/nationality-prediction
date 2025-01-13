@@ -12,7 +12,7 @@ def get_categories(name_p):
 if __name__ == "__main__":
     data = pd.DataFrame(columns=['name', 'nationality'])
 
-    size_per_search = 20000
+    size_per_search = float('inf')
 
     # Europe
     data = download_country_data(data, 'German', 'DE', size_per_search)
